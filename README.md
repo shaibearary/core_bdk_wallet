@@ -293,6 +293,7 @@ Rust source files at the root.
 ```
 mkdir schema
 cp ../bitcoin/src/ipc/capnp/*.capnp schema/
+cp ../libmultiprocess/include/mp/*.capnp schema/
 cp /usr/include/capnp/c++.capnp schema/
 sed -i 's/"\/mp\//"/g' schema/*.capnp
 sed -i 's/"\/capnp\//"/g' schema/*.capnp

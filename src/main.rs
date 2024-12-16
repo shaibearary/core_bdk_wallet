@@ -51,7 +51,7 @@ use proxy_capnp::thread::Client as ThreadClient;
 
 // When connected to Bitcoin Core we will sleep for that many seconds before disconnecting
 // and exiting the program. Feel free to change.
-const SLEEP_BEFORE_DISCONNECT_SECS: u64 = 60;
+const SLEEP_BEFORE_DISCONNECT_SECS: u64 = 6;
 
 // I only track a single descriptor (no change) for the purpose of this PoC. Feel free to
 // change it and/or the network if you want to try for instance on Signet.

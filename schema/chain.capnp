@@ -158,8 +158,9 @@ struct FoundBlockParam {
     wantMaxTime @3 :Bool;
     wantMtpTime @4 :Bool;
     wantInActiveChain @5 :Bool;
-    nextBlock @6: FoundBlockParam;
-    wantData @7 :Bool;
+    wantLocator @6 :Bool;
+    nextBlock @7: FoundBlockParam;
+    wantData @8 :Bool;
 }
 
 struct FoundBlockResult {
@@ -169,9 +170,10 @@ struct FoundBlockResult {
     maxTime @3 :Int64;
     mtpTime @4 :Int64;
     inActiveChain @5 :Int64;
-    nextBlock @6: FoundBlockResult;
-    data @7 :Data;
-    found @8 :Bool;
+    locator @6 :Data;
+    nextBlock @7: FoundBlockResult;
+    data @8 :Data;
+    found @9 :Bool;
 }
 
 struct BlockInfo $Proxy.wrap("interfaces::BlockInfo") {
