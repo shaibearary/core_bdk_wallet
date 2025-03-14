@@ -46,12 +46,15 @@ use chain_capnp::{
         UpdatedBlockTipParams, UpdatedBlockTipResults,
     },
 };
+use capnp::capability::{Params, Results};
+use crate::chain_capnp::chain::{FindCoinsParams, FindCoinsResults};
+
 use init_capnp::init::Client as InitClient;
 use proxy_capnp::thread::Client as ThreadClient;
 
 // When connected to Bitcoin Core we will sleep for that many seconds before disconnecting
 // and exiting the program. Feel free to change.
-const SLEEP_BEFORE_DISCONNECT_SECS: u64 = 6;
+const SLEEP_BEFORE_DISCONNECT_SECS: u64 = 60;
 
 // I only track a single descriptor (no change) for the purpose of this PoC. Feel free to
 // change it and/or the network if you want to try for instance on Signet.
@@ -565,6 +568,54 @@ async fn wallet_startup_complete(rpc: &RpcInterface, wallet: BdkWallet) -> Arc<M
 
     let wallet = Arc::new(Mutex::new(wallet));
     rpc.register_notifications(wallet.clone()).await;
+
+    // Scan the mempool for wallet-related coins using findCoins
+    println!("Scanning mempool for wallet-related coins...");
+    let mut find_coins_request = rpc.chain_interface.find_coins_request();
+
+    // Set the thread context for the request
+    find_coins_request
+        .get()
+        .get_context()
+        .unwrap()
+        .set_thread(rpc.thread.clone());
+
+    // Send the request and handle the response with proper error handling
+    match find_coins_request.send().promise.await {
+        Ok(response) => {
+            match response.get() {
+                Ok(result) => {
+                    match result.get_coins() {
+                        Ok(coins) => {
+                            println!("Found {} coins in mempool", coins.len());
+                            for coin in coins.iter() {
+                                // Process each coin found in the mempool
+                                println!("Found coin: {:?}", coin);
+                                
+                                // If you need to update the wallet with the found coins
+                                if let Ok(mut wallet_guard) = wallet.lock() {
+                                    // Extract coin data and update wallet
+                                    // Example: wallet_guard.add_coin(coin);
+                                }
+                            }
+                        },
+                        Err(e) => {
+                            eprintln!("Error getting coins: {}", e);
+                        }
+                    }
+                },
+                Err(e) => {
+                    eprintln!("Error getting response: {}", e);
+                }
+            }
+        },
+        Err(e) => {
+            eprintln!("Error sending find_coins request: {}", e);
+        }
+    }
+    
+    println!("Mempool scan complete.");
+
     wallet
 }
 
