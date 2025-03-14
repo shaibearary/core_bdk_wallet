@@ -165,13 +165,14 @@ pub mod block_ref {
   impl Pipeline  {
   }
   mod _private {
-    pub static ENCODED_NODE: [::capnp::Word; 58] = [
-      ::capnp::word(0, 0, 0, 0, 5, 0, 6, 0),
+    pub static ENCODED_NODE: [::capnp::Word; 59] = [
+      ::capnp::word(0, 0, 0, 0, 6, 0, 6, 0),
       ::capnp::word(105, 3, 53, 73, 137, 75, 190, 179),
       ::capnp::word(13, 0, 0, 0, 1, 0, 1, 0),
       ::capnp::word(40, 74, 72, 203, 50, 98, 44, 205),
       ::capnp::word(1, 0, 7, 0, 0, 0, 0, 0),
       ::capnp::word(0, 0, 0, 0, 0, 0, 0, 0),
+      ::capnp::word(113, 1, 0, 0, 209, 1, 0, 0),
       ::capnp::word(21, 0, 0, 0, 178, 0, 0, 0),
       ::capnp::word(29, 0, 0, 0, 7, 0, 0, 0),
       ::capnp::word(29, 0, 0, 0, 31, 0, 0, 0),
@@ -425,13 +426,14 @@ pub mod bilingual_str {
   impl Pipeline  {
   }
   mod _private {
-    pub static ENCODED_NODE: [::capnp::Word; 60] = [
-      ::capnp::word(0, 0, 0, 0, 5, 0, 6, 0),
+    pub static ENCODED_NODE: [::capnp::Word; 61] = [
+      ::capnp::word(0, 0, 0, 0, 6, 0, 6, 0),
       ::capnp::word(184, 230, 192, 185, 48, 189, 181, 138),
       ::capnp::word(13, 0, 0, 0, 1, 0, 0, 0),
       ::capnp::word(40, 74, 72, 203, 50, 98, 44, 205),
       ::capnp::word(2, 0, 7, 0, 0, 0, 0, 0),
       ::capnp::word(0, 0, 0, 0, 0, 0, 0, 0),
+      ::capnp::word(211, 1, 0, 0, 55, 2, 0, 0),
       ::capnp::word(21, 0, 0, 0, 210, 0, 0, 0),
       ::capnp::word(33, 0, 0, 0, 7, 0, 0, 0),
       ::capnp::word(33, 0, 0, 0, 31, 0, 0, 0),
@@ -708,13 +710,14 @@ pub mod result { /* Value */
     }
   }
   mod _private {
-    pub static ENCODED_NODE: [::capnp::Word; 50] = [
-      ::capnp::word(0, 0, 0, 0, 5, 0, 6, 0),
+    pub static ENCODED_NODE: [::capnp::Word; 51] = [
+      ::capnp::word(0, 0, 0, 0, 6, 0, 6, 0),
       ::capnp::word(88, 204, 207, 78, 76, 218, 204, 233),
       ::capnp::word(13, 0, 0, 0, 1, 0, 0, 0),
       ::capnp::word(40, 74, 72, 203, 50, 98, 44, 205),
       ::capnp::word(2, 0, 7, 0, 0, 0, 0, 0),
       ::capnp::word(0, 0, 0, 0, 1, 0, 0, 0),
+      ::capnp::word(57, 2, 0, 0, 130, 2, 0, 0),
       ::capnp::word(21, 0, 0, 0, 162, 0, 0, 0),
       ::capnp::word(29, 0, 0, 0, 7, 0, 0, 0),
       ::capnp::word(0, 0, 0, 0, 0, 0, 0, 0),
@@ -947,13 +950,14 @@ pub mod result_void { /* Value */
     }
   }
   mod _private {
-    pub static ENCODED_NODE: [::capnp::Word; 35] = [
-      ::capnp::word(0, 0, 0, 0, 5, 0, 6, 0),
+    pub static ENCODED_NODE: [::capnp::Word; 36] = [
+      ::capnp::word(0, 0, 0, 0, 6, 0, 6, 0),
       ::capnp::word(12, 65, 244, 69, 169, 51, 90, 197),
       ::capnp::word(13, 0, 0, 0, 1, 0, 0, 0),
       ::capnp::word(40, 74, 72, 203, 50, 98, 44, 205),
       ::capnp::word(1, 0, 7, 0, 0, 0, 0, 0),
       ::capnp::word(0, 0, 0, 0, 1, 0, 0, 0),
+      ::capnp::word(165, 2, 0, 0, 221, 2, 0, 0),
       ::capnp::word(21, 0, 0, 0, 194, 0, 0, 0),
       ::capnp::word(29, 0, 0, 0, 7, 0, 0, 0),
       ::capnp::word(0, 0, 0, 0, 0, 0, 0, 0),
@@ -1205,13 +1209,14 @@ pub mod pair { /* Key,Value */
     }
   }
   mod _private {
-    pub static ENCODED_NODE: [::capnp::Word; 52] = [
-      ::capnp::word(0, 0, 0, 0, 5, 0, 6, 0),
+    pub static ENCODED_NODE: [::capnp::Word; 53] = [
+      ::capnp::word(0, 0, 0, 0, 6, 0, 6, 0),
       ::capnp::word(30, 167, 153, 65, 252, 246, 242, 142),
       ::capnp::word(13, 0, 0, 0, 1, 0, 0, 0),
       ::capnp::word(40, 74, 72, 203, 50, 98, 44, 205),
       ::capnp::word(2, 0, 7, 0, 0, 0, 0, 0),
       ::capnp::word(0, 0, 0, 0, 1, 0, 0, 0),
+      ::capnp::word(223, 2, 0, 0, 32, 3, 0, 0),
       ::capnp::word(21, 0, 0, 0, 146, 0, 0, 0),
       ::capnp::word(29, 0, 0, 0, 7, 0, 0, 0),
       ::capnp::word(0, 0, 0, 0, 0, 0, 0, 0),
@@ -1462,13 +1467,14 @@ pub mod pair_int64 { /* Key */
     }
   }
   mod _private {
-    pub static ENCODED_NODE: [::capnp::Word; 50] = [
-      ::capnp::word(0, 0, 0, 0, 5, 0, 6, 0),
+    pub static ENCODED_NODE: [::capnp::Word; 51] = [
+      ::capnp::word(0, 0, 0, 0, 6, 0, 6, 0),
       ::capnp::word(20, 163, 102, 123, 112, 31, 6, 182),
       ::capnp::word(13, 0, 0, 0, 1, 0, 1, 0),
       ::capnp::word(40, 74, 72, 203, 50, 98, 44, 205),
       ::capnp::word(1, 0, 7, 0, 0, 0, 0, 0),
       ::capnp::word(0, 0, 0, 0, 1, 0, 0, 0),
+      ::capnp::word(34, 3, 0, 0, 97, 3, 0, 0),
       ::capnp::word(21, 0, 0, 0, 186, 0, 0, 0),
       ::capnp::word(29, 0, 0, 0, 7, 0, 0, 0),
       ::capnp::word(0, 0, 0, 0, 0, 0, 0, 0),

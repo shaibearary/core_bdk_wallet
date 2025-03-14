@@ -1,0 +1,11 @@
+/Users/apple/core_bdk_wallet/target/debug/deps/libcapnp_futures-9077db612f493f1e.rmeta: /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/capnp-futures-0.20.1/src/lib.rs /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/capnp-futures-0.20.1/src/read_stream.rs /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/capnp-futures-0.20.1/src/serialize.rs /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/capnp-futures-0.20.1/src/serialize_packed.rs /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/capnp-futures-0.20.1/src/write_queue.rs
+
+/Users/apple/core_bdk_wallet/target/debug/deps/libcapnp_futures-9077db612f493f1e.rlib: /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/capnp-futures-0.20.1/src/lib.rs /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/capnp-futures-0.20.1/src/read_stream.rs /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/capnp-futures-0.20.1/src/serialize.rs /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/capnp-futures-0.20.1/src/serialize_packed.rs /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/capnp-futures-0.20.1/src/write_queue.rs
+
+/Users/apple/core_bdk_wallet/target/debug/deps/capnp_futures-9077db612f493f1e.d: /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/capnp-futures-0.20.1/src/lib.rs /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/capnp-futures-0.20.1/src/read_stream.rs /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/capnp-futures-0.20.1/src/serialize.rs /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/capnp-futures-0.20.1/src/serialize_packed.rs /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/capnp-futures-0.20.1/src/write_queue.rs
+
+/Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/capnp-futures-0.20.1/src/lib.rs:
+/Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/capnp-futures-0.20.1/src/read_stream.rs:
+/Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/capnp-futures-0.20.1/src/serialize.rs:
+/Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/capnp-futures-0.20.1/src/serialize_packed.rs:
+/Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/capnp-futures-0.20.1/src/write_queue.rs:

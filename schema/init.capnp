@@ -7,7 +7,7 @@
 using Cxx = import "c++.capnp";
 $Cxx.namespace("ipc::capnp::messages");
 
-using Proxy = import "proxy.capnp";
+using Proxy = import "/proxy.capnp";
 $Proxy.include("interfaces/chain.h");
 $Proxy.include("interfaces/echo.h");
 $Proxy.include("interfaces/init.h");
