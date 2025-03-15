@@ -1,0 +1,12 @@
+/Users/apple/core_bdk_wallet/target/debug/deps/libbdk_core-36eb19b677d51e35.rmeta: /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bdk_core-0.3.0/src/lib.rs /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bdk_core-0.3.0/src/block_id.rs /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bdk_core-0.3.0/src/checkpoint.rs /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bdk_core-0.3.0/src/tx_update.rs /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bdk_core-0.3.0/src/merge.rs /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bdk_core-0.3.0/src/spk_client.rs
+
+/Users/apple/core_bdk_wallet/target/debug/deps/libbdk_core-36eb19b677d51e35.rlib: /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bdk_core-0.3.0/src/lib.rs /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bdk_core-0.3.0/src/block_id.rs /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bdk_core-0.3.0/src/checkpoint.rs /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bdk_core-0.3.0/src/tx_update.rs /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bdk_core-0.3.0/src/merge.rs /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bdk_core-0.3.0/src/spk_client.rs
+
+/Users/apple/core_bdk_wallet/target/debug/deps/bdk_core-36eb19b677d51e35.d: /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bdk_core-0.3.0/src/lib.rs /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bdk_core-0.3.0/src/block_id.rs /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bdk_core-0.3.0/src/checkpoint.rs /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bdk_core-0.3.0/src/tx_update.rs /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bdk_core-0.3.0/src/merge.rs /Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bdk_core-0.3.0/src/spk_client.rs
+
+/Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bdk_core-0.3.0/src/lib.rs:
+/Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bdk_core-0.3.0/src/block_id.rs:
+/Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bdk_core-0.3.0/src/checkpoint.rs:
+/Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bdk_core-0.3.0/src/tx_update.rs:
+/Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bdk_core-0.3.0/src/merge.rs:
+/Users/apple/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/bdk_core-0.3.0/src/spk_client.rs:
