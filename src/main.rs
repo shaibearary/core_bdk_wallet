@@ -53,7 +53,7 @@ use crate::rpc_interface::RpcInterface;
 
 // When connected to Bitcoin Core we will sleep for that many seconds before disconnecting
 // and exiting the program. Feel free to change.
-const SLEEP_BEFORE_DISCONNECT_SECS: u64 = 6;
+const SLEEP_BEFORE_DISCONNECT_SECS: u64 = 60;
 
 // I only track a single descriptor (no change) for the purpose of this PoC. Feel free to
 // change it and/or the network if you want to try for instance on Signet.
@@ -125,7 +125,21 @@ impl BdkWallet {
     pub fn tip(&self) -> BlockId {
         self.chain.tip().block_id()
     }
-
+    pub fn list_unspent(&self) -> Vec<bitcoin::OutPoint> {
+        // self.tx_graph.index.outpoints().into_iter().map(|(_, op)| *op).collect()
+        let outpoints = self
+            .tx_graph
+            .index
+            .outpoints()
+            .into_iter()
+            .map(|((_, _), op)| ((), *op));
+        println!("Found {} outpoints in wallet", outpoints.clone().count());
+        outpoints.map(|(_, op)| op).collect()
+        // let graph = self.tx_graph.graph();
+        // let balance = graph.balance(&self.chain, self.tip(), outpoints.clone(), |_, _| true);
+        // let utxos = graph.filter_chain_unspents(&self.chain, self.tip(), outpoints);
+        
+    }
     /// Apply the effects of a block on the wallet. Persist the changes to disk.
     pub fn apply_block(
         &mut self,
@@ -238,6 +252,7 @@ impl BdkWallet {
             .outpoints()
             .into_iter()
             .map(|((_, _), op)| ((), *op));
+
         let graph = self.tx_graph.graph();
         let balance = graph.balance(&self.chain, self.tip(), outpoints.clone(), |_, _| true);
         let utxos = graph.filter_chain_unspents(&self.chain, self.tip(), outpoints);
@@ -563,10 +578,30 @@ impl chain_capnp::chain_notifications::Server for Arc<Mutex<BdkWallet>> {
 // BDK wallet is up and synced with Core. Inform users and register for notifs.
 async fn wallet_startup_complete(rpc: &RpcInterface, wallet: BdkWallet) -> Arc<Mutex<BdkWallet>> {
     println!("BDK Core is synced with bitcoin-node.");
+    let outpoints = wallet.list_unspent();
+
+    if !outpoints.is_empty() {
+    println!("Scanning {} wallet outpoints in mempool", outpoints.len());
+    let coins = rpc.find_coins_request(outpoints).await;
+
+    // Process found coins
+    if !coins.is_empty() {
+        println!("Found {} coins in mempool/UTXO set", coins.len());
+        for (outpoint, txout) in &coins {
+            println!("  {}:{} - {} satoshis", 
+                    outpoint.txid, outpoint.vout, txout.value);
+        }
+    }
+    }
     rpc.show_progress("BDK Core startup", 100, true).await;
 
     let wallet = Arc::new(Mutex::new(wallet));
     rpc.register_notifications(wallet.clone()).await;
+    
+    // Scan the mempool for wallet-related coins
+    // println!("Scanning mempool for wallet-related coins...");
+    // rpc.find_coins_request().await;
+    
     wallet
 }
 
@@ -648,7 +683,8 @@ async fn wallet_startup(
         let block = rpc.get_block(&node_tip.hash, h).await;
         wallet.apply_block(&block, h)?;
     }
-
+    // Get wallet outpoints to scan
+    
     println!("Done syncing missing blocks.");
     return Ok(wallet_startup_complete(rpc, wallet).await);
 }

@@ -1,7 +1,8 @@
 use capnp_rpc::{pry, rpc_twoparty_capnp, twoparty, RpcSystem};
 use tokio::task::{self, JoinHandle};
 use tokio_util::compat::{TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt};
-use std::{sync::{Arc, Mutex}};
+use std::{sync::{Arc, Mutex}, io::{Error, ErrorKind}};
+// use bdk_chain::{bitcoin, BlockId};
 use bdk_chain::{
     self,
     bitcoin::{self, consensus::Decodable, hashes::Hash},
@@ -67,8 +68,134 @@ impl RpcInterface {
             disconnector,
         })
     }
-
+    pub async fn find_coins_request(&self, outpoints: Vec<bitcoin::OutPoint>) -> Vec<(bitcoin::OutPoint, bitcoin::TxOut)> {
+        println!("DEBUG: Requesting coin information for {} outpoints", outpoints.len());
+        let mut find_coins_req = self.chain_interface.find_coins_request();
+        
+        // Set the thread context
+        find_coins_req
+            .get()
+            .get_context()
+            .unwrap()
+            .set_thread(self.thread.clone());
+        
+        // Initialize the coins list with the outpoints
+        let mut coins_list = find_coins_req.get().init_coins(outpoints.len() as u32);
+        for (i, outpoint) in outpoints.iter().enumerate() {
+            let mut pair = coins_list.reborrow().get(i as u32);
+            
+            // Serialize the outpoint to binary data
+            let mut outpoint_data = Vec::new();
+            outpoint_data.extend_from_slice(&outpoint.txid[..]);
+            outpoint_data.extend_from_slice(&outpoint.vout.to_le_bytes());
+            // let data_reader = capnp::data::Reader::FromPointer(*outpoint_data);
+            pair.reborrow().set_key(&outpoint_data[..]);
+            
+            // Set the key (outpoint)
+            // pair.reborrow().set_key(&outpoint_data.as_ref());
+            // pair.reborrow().set_key(data_reader);
+            
+            // Initialize the value (will be filled by Bitcoin Core)
+            pair.get_value().unwrap();
+        }
+        
+        // Send the request and process the response
+        let response = find_coins_req.send().promise.await.unwrap();
+        let result_data = response.get().unwrap();
+        let coins_result = result_data.get_coins().unwrap();
+        
+        let mut result_coins = Vec::with_capacity(coins_result.len() as usize);
+        
+        for i in 0..coins_result.len() {
+            let pair = coins_result.get(i);
+            
+            // Get the outpoint from the key
+            let outpoint_bytes = pair.get_key().unwrap();
+            if outpoint_bytes.len() < 36 {
+                println!("WARNING: Invalid outpoint data received");
+                continue;
+            }
+            
+            let txid = bitcoin::Txid::from_slice(&outpoint_bytes[0..32])
+                .expect("Core must provide valid txids");
+            let vout = u32::from_le_bytes([
+                outpoint_bytes[32], 
+                outpoint_bytes[33], 
+                outpoint_bytes[34], 
+                outpoint_bytes[35]
+            ]);
+            let outpoint = bitcoin::OutPoint { txid, vout };
+            
+            // Get the coin data from the value
+            let coin_bytes = pair.get_value().unwrap();
+            if coin_bytes.is_empty() {
+                println!("DEBUG: Empty coin for outpoint {}:{} (not found/spent)", txid, vout);
+                continue;
+            }
+            
+            // Parse the coin data according to Bitcoin Core serialization format
+            
+            // 1. Parse the height and coinbase flag (VARINT encoding: height * 2 + coinbase)
+            // Note: This is a simplified approach. A proper VARINT decoder would be more robust
+            let mut height_code = 0u32;
+            let mut offset = 0;
+            let mut shift = 0;
+            
+            while offset < coin_bytes.len() {
+                let byte = coin_bytes[offset];
+                height_code |= ((byte & 0x7f) as u32) << shift;
+                offset += 1;
+                
+                if byte & 0x80 == 0 {
+                    break; // End of VARINT
+                }
+                shift += 7;
+            }
+            
+            let height = height_code >> 1; // Divide by 2
+            let is_coinbase = (height_code & 1) != 0;
+            
+            // 2. Parse the amount (next 8 bytes after VARINT)
+            if offset + 8 > coin_bytes.len() {
+                println!("WARNING: Insufficient data for amount in coin");
+                continue;
+            }
+            
+            let value = u64::from_le_bytes([
+                coin_bytes[offset], coin_bytes[offset+1], coin_bytes[offset+2], coin_bytes[offset+3],
+                coin_bytes[offset+4], coin_bytes[offset+5], coin_bytes[offset+6], coin_bytes[offset+7],
+            ]);
+            offset += 8;
+            
+            // 3. Parse the script (remaining bytes)
+            if offset >= coin_bytes.len() {
+                println!("WARNING: No script data in coin");
+                continue;
+            }
+            
+            // Getting the script data - first byte might be length prefix in some serialization formats
+            let script_data = &coin_bytes[offset..];
+            let script = bitcoin::ScriptBuf::from(script_data.to_vec());
+            
+            // Create TxOut with parsed value and script
+            let txout = bitcoin::TxOut {
+                value: bitcoin::Amount::from_sat(value),
+                script_pubkey: script,
+            };
+            
+            println!("Found coin: {}:{} - {} satoshis (height: {}, coinbase: {})",
+                     txid, vout, value, height, is_coinbase);
+            
+            result_coins.push((outpoint, txout));
+        }
+        
+        println!("Found {} coins in mempool/UTXO set", result_coins.len());
+        result_coins
+    }
+    // Helper functions for serialization
+  
     pub async fn get_tip(&self) -> BlockId {
+        println!("DEBUG: Requesting tip");
         let mut height_req = self.chain_interface.get_height_request();
         height_req
             .get()
@@ -78,7 +205,6 @@ impl RpcInterface {
         let response = height_req.send().promise.await.unwrap();
         let height_i32 = response.get().unwrap().get_result();
         let height = height_i32.try_into().expect("Height is never negative.");
-
         let mut hash_req = self.chain_interface.get_block_hash_request();
         hash_req
             .get()
@@ -123,57 +249,84 @@ impl RpcInterface {
         let response = has_blocks_req.send().promise.await.unwrap();
         response.get().unwrap().get_result()
     }
-    pub async fn find_coins_request(&self, wallet: Arc<Mutex<BdkWallet>>) {
-        let mut find_coins_request = self.chain_interface.find_coins_request();
 
-        // Set the thread context for the request
-        find_coins_request
-            .get()
-            .get_context()
-            .unwrap()
-            .set_thread(self.thread.clone());
-    
-        // Send the request and handle the response with proper error handling
-        match find_coins_request.send().promise.await {
-            Ok(response) => {
-                match response.get() {
-                    Ok(result) => {
-                        match result.get_coins() {
-                            Ok(coins) => {
-                                println!("Found {} coins in mempool", coins.len());
-                                for coin in coins.iter() {
-                                    // Process each coin found in the mempool
-                                    println!("Found coin: {:?}", coin);
-                                    
-                                    // If you need to update the wallet with the found coins
-                                    if let Ok(mut wallet_guard) = wallet.lock() {
-                                        // Extract coin data and update wallet
-                                        // Example: wallet_guard.add_coin(coin);
-                                    }
-                                }
-                            },
-                            Err(e) => {
-                                eprintln!("Error getting coins: {}", e);
-                            }
-                        }
-                    },
-                    Err(e) => {
-                        eprintln!("Error getting response: {}", e);
-                    }
-                }
-            },
-            Err(e) => {
-                eprintln!("Error sending find_coins request: {}", e);
-            }
-        }
+
+    /// The method takes a map of outpoints and populates it with coin information.
+    /// In our Rust implementation, we pass a list of outpoints (serialized as binary data)
+    /// and receive a list of pairs where each key is an outpoint and each value is a coin.
+    // pub async fn find_coins_request(&self, outpoints: Vec<bitcoin::OutPoint>) -> Vec<(bitcoin::OutPoint, bitcoin::TxOut)> {
+    //     let mut find_coins_request = self.chain_interface.find_coins_request();
+
+    //     // Set the thread context for the request
+    //     find_coins_request
+    //         .get()
+    //         .get_context()
+    //         .unwrap()
+    //         .set_thread(self.thread.clone());
         
-        println!("Mempool scan complete.");
-    }
+    //     // Set the outpoints parameter if provided
+    //     if !outpoints.is_empty() {
+    //         let mut coins_list = find_coins_request.get().init_coins(outpoints.len() as u32);
+    //         for (i, outpoint) in outpoints.iter().enumerate() {
+    //             let mut pair = coins_list.reborrow().get(i as u32);
+    //             // Serialize the outpoint to binary data
+    //             let mut outpoint_data = Vec::new();
+    //             outpoint.consensus_encode(&mut outpoint_data).expect("Serialization should not fail");
+    //             pair.set_key(&outpoint_data);
+    //             // Value will be populated by Bitcoin Core
+    //             pair.set_value(&[]);
+    //         }
+    //     }
+       
+    //     // Send the request and handle the response
+    //     let mut result = Vec::new();
+    //     match find_coins_request.send().promise.await {
+    //         Ok(response) => {
+    //             match response.get() {
+    //                 Ok(result_data) => {
+    //                     match result_data.get_coins() {
+    //                         Ok(coins) => {
+    //                             println!("Found {} coins in mempool/UTXO set", coins.len());
+    //                             for coin in coins.iter() {
+    //                                 if let (Ok(key_data), Ok(value_data)) = (coin.get_key(), coin.get_value()) {
+    //                                     if !key_data.is_empty() && !value_data.is_empty() {
+    //                                         // Deserialize the outpoint and coin
+    //                                         if let Ok(outpoint) = bitcoin::OutPoint::consensus_decode(&mut std::io::Cursor::new(key_data)) {
+    //                                             if let Ok(txout) = bitcoin::TxOut::consensus_decode(&mut std::io::Cursor::new(value_data)) {
+    //                                                 println!("Found coin: {}:{} with value {}", 
+    //                                                          outpoint.txid, outpoint.vout, txout.value);
+    //                                                 result.push((outpoint, txout));
+    //                                             }
+    //                                         }
+    //                                     }
+    //                                 }
+    //                             }
+    //                         },
+    //                         Err(e) => {
+    //                             eprintln!("Error getting coins: {}", e);
+    //                         }
+    //                     }
+    //                 },
+    //                 Err(e) => {
+    //                     eprintln!("Error getting response: {}", e);
+    //                 }
+    //             }
+    //         },
+    //         Err(e) => {
+    //             eprintln!("Error sending find_coins request: {}", e);
+    //         }
+    //     }
+        
+    //     println!("Mempool scan complete.");
+    //     result
+    // }
+
     pub async fn get_block(
         &self,
         node_tip_hash: &bitcoin::BlockHash,
         height: i32,
     ) -> bitcoin::Block {
+        println!("DEBUG: Requesting block at height {}", height);
         let mut find_req = self.chain_interface.find_ancestor_by_height_request();
         find_req
             .get()
