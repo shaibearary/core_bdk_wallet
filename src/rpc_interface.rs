@@ -5,7 +5,7 @@ use std::{sync::{Arc, Mutex}, io::{Error, ErrorKind}};
 // use bdk_chain::{bitcoin, BlockId};
 use bdk_chain::{
     self,
-    bitcoin::{self, consensus::Decodable, hashes::Hash},
+    bitcoin::{self, consensus::Decodable, hashes::Hash, address::{Address, NetworkUnchecked, AddressType}},
     keychain_txout::KeychainTxOutIndex,
     local_chain::LocalChain,
     miniscript::{Descriptor, DescriptorPublicKey},
@@ -15,6 +15,7 @@ use crate::chain_capnp::{chain::Client as ChainClient};
 use crate::init_capnp::init::Client as InitClient;
 use crate::proxy_capnp::thread::Client as ThreadClient;
 use crate::BdkWallet;
+use std::str::FromStr;
 
 pub struct RpcInterface {
     pub rpc_handle: JoinHandle<Result<(), capnp::Error>>,
@@ -251,76 +252,6 @@ impl RpcInterface {
     }
 
 
-    /// The method takes a map of outpoints and populates it with coin information.
-    /// In our Rust implementation, we pass a list of outpoints (serialized as binary data)
-    /// and receive a list of pairs where each key is an outpoint and each value is a coin.
-    // pub async fn find_coins_request(&self, outpoints: Vec<bitcoin::OutPoint>) -> Vec<(bitcoin::OutPoint, bitcoin::TxOut)> {
-    //     let mut find_coins_request = self.chain_interface.find_coins_request();
-
-    //     // Set the thread context for the request
-    //     find_coins_request
-    //         .get()
-    //         .get_context()
-    //         .unwrap()
-    //         .set_thread(self.thread.clone());
-        
-    //     // Set the outpoints parameter if provided
-    //     if !outpoints.is_empty() {
-    //         let mut coins_list = find_coins_request.get().init_coins(outpoints.len() as u32);
-    //         for (i, outpoint) in outpoints.iter().enumerate() {
-    //             let mut pair = coins_list.reborrow().get(i as u32);
-    //             // Serialize the outpoint to binary data
-    //             let mut outpoint_data = Vec::new();
-    //             outpoint.consensus_encode(&mut outpoint_data).expect("Serialization should not fail");
-    //             pair.set_key(&outpoint_data);
-    //             // Value will be populated by Bitcoin Core
-    //             pair.set_value(&[]);
-    //         }
-    //     }
-       
-    //     // Send the request and handle the response
-    //     let mut result = Vec::new();
-    //     match find_coins_request.send().promise.await {
-    //         Ok(response) => {
-    //             match response.get() {
-    //                 Ok(result_data) => {
-    //                     match result_data.get_coins() {
-    //                         Ok(coins) => {
-    //                             println!("Found {} coins in mempool/UTXO set", coins.len());
-    //                             for coin in coins.iter() {
-    //                                 if let (Ok(key_data), Ok(value_data)) = (coin.get_key(), coin.get_value()) {
-    //                                     if !key_data.is_empty() && !value_data.is_empty() {
-    //                                         // Deserialize the outpoint and coin
-    //                                         if let Ok(outpoint) = bitcoin::OutPoint::consensus_decode(&mut std::io::Cursor::new(key_data)) {
-    //                                             if let Ok(txout) = bitcoin::TxOut::consensus_decode(&mut std::io::Cursor::new(value_data)) {
-    //                                                 println!("Found coin: {}:{} with value {}", 
-    //                                                          outpoint.txid, outpoint.vout, txout.value);
-    //                                                 result.push((outpoint, txout));
-    //                                             }
-    //                                         }
-    //                                     }
-    //                                 }
-    //                             }
-    //                         },
-    //                         Err(e) => {
-    //                             eprintln!("Error getting coins: {}", e);
-    //                         }
-    //                     }
-    //                 },
-    //                 Err(e) => {
-    //                     eprintln!("Error getting response: {}", e);
-    //                 }
-    //             }
-    //         },
-    //         Err(e) => {
-    //             eprintln!("Error sending find_coins request: {}", e);
-    //         }
-    //     }
-        
-    //     println!("Mempool scan complete.");
-    //     result
-    // }
-
     pub async fn get_block(
         &self,
         node_tip_hash: &bitcoin::BlockHash,
@@ -407,5 +338,77 @@ impl RpcInterface {
     pub async fn disconnect(self) -> Result<(), capnp::Error> {
         self.disconnector.await.unwrap();
         self.rpc_handle.await.unwrap()
+    }
+
+    pub async fn create_and_broadcast_transaction(&self, utxos: Vec<bitcoin::OutPoint>, recipient_address: &str, amount: u64) -> Result<bitcoin::Txid, Box<dyn std::error::Error>> {
+        // Create a transaction
+        let mut tx = bitcoin::Transaction {
+            version: bitcoin::transaction::Version::ONE,  // Use Version::ONE instead of raw integer
+            lock_time: bitcoin::absolute::LockTime::ZERO, // Use the correct LockTime type
+            input: vec![],
+            output: vec![bitcoin::TxOut {
+                value: bitcoin::Amount::from_sat(amount),
+                script_pubkey: {
+                    // First try to parse as a regular address
+                    if let Ok(addr) = Address::from_str(recipient_address) {
+                        let checked_addr = addr.require_network(bitcoin::Network::Bitcoin)?;
+                        match checked_addr.address_type() {
+                            Some(AddressType::P2pkh) => checked_addr.script_pubkey(),
+                            Some(AddressType::P2sh) => checked_addr.script_pubkey(),
+                            Some(AddressType::P2wpkh) => checked_addr.script_pubkey(),
+                            Some(AddressType::P2wsh) => checked_addr.script_pubkey(),
+                            Some(AddressType::P2tr) => checked_addr.script_pubkey(),
+                            Some(_) => return Err("Unknown address type".into()),
+                            None => return Err("Unsupported address type".into()),
+                        }
+                    } else {
+                        // If not a valid address string, try to parse as a script
+                        let script = bitcoin::ScriptBuf::from_hex(recipient_address)?;
+                        Address::from_script(&script, bitcoin::Network::Bitcoin)?.script_pubkey()
+                    }
+                },
+            }],
+        };
+
+        // Add inputs from UTXOs
+        for utxo in utxos {
+            tx.input.push(bitcoin::TxIn {
+                previous_output: utxo,
+                script_sig: bitcoin::ScriptBuf::new(),
+                sequence: bitcoin::Sequence::MAX,
+                witness: bitcoin::Witness::default(),
+            });
+        }
+
+        // Sign the transaction (this is a placeholder, actual signing logic will depend on your wallet setup)
+        // tx.sign(&private_keys);
+        use bitcoin::consensus::Encodable; 
+        // Serialize the transaction
+        let mut tx_data = Vec::new();
+        tx.consensus_encode(&mut tx_data)?;
+
+        // Broadcast the transaction
+        let mut broadcast_req = self.chain_interface.broadcast_transaction_request();
+        broadcast_req
+        .get()
+        .get_context()
+        .unwrap()
+        .set_thread(self.thread.clone());
+        broadcast_req.get().set_tx(&tx_data);
+        let response = broadcast_req.send().promise.await?;
+
+        // Get the transaction ID from the response
+        let result = response.get().unwrap().get_result();
+        // let txid = bitcoin::Txid::from_slice(txid_bytes)?;
+        if result {
+            println!("Transaction broadcast successful");
+        } else {
+            let error = response.get().unwrap().get_error()?;
+            println!("Transaction broadcast failed: ");
+            return Err(error.to_str()?.into());
+        }
+
+        Ok(tx.txid())
+
     }
 }
